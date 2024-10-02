@@ -1,0 +1,384 @@
+---
+title: "Regressão Linear Múltipla - Exemplo Wage"
+author: "Julio Hsu, Guilherme Alberto Dutra Camelo, Fernando Souto Lima"
+date: "`r Sys.Date()`"
+format: pdf
+documentclass: scrartcl
+classoption:
+  - DIV=11
+  - numbers=noendperiod
+papersize: letter
+header-includes:
+  - '\KOMAoption{captions}{tableheading}'
+block-headings: true
+lang: pt
+# bibliography:
+#   - 00_Refs/refs.bib
+---
+
+```{r Setup}
+#| echo: true
+
+# Setup para o relatório Quarto
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+```
+
+
+# Introdução
+
+O objetivo deste relatório é desenvolver um modelo de regressão linear múltipla para analisar a relação entre o salário e as características como idade, estado civil, raça, nível de educação, entre outras, de 3000 empregados masculinos na região do Atlântico.
+
+Todas as análises são realizadas com base no conjunto de dados "Wage", editado manualmente por Steve Miller, da Inquidia Consulting (anteriormente Open BI), a partir do suplemento de março de 2011 da Pesquisa Atual de População.
+
+Fonte: `https://www.re3data.org/repository/r3d100011860`
+
+
+# Os Dados
+
+Com a inserção da base de dados mencionado acima, podemos observar que temos um relátorio de 3000 indíviduos representado por 'Rows' e suas respectivas 11 características representado por 'Columns', tal como:
+
+```{r}
+library(ISLR)
+library(dplyr)
+
+glimpse(Wage)
+```
+Além disso, ao analisar as características ou variáveis correlacionadas à variável resposta "wage", temos os seguintes dados para cada indivíduo:
+
+-   `year`: ano em que os dados foram relatados (número inteiro);
+
+-   `age`: idade do empregado (número inteiro);
+
+-   `maritl`: estado civil (categoria): 1.Solteiro 2.Casado 3.Viúvo 4.Divorciado 5.Separado;
+
+-   `race`: raça do empregado (categoria): 1.Branco 2.Negro 3.Asiático 4.Outros;
+
+-   `education`: nível educacional (categoria): 1.Abaixo do ensino médio 2.Ensino médio completo 3.Ensino superior em andamento 4.Graduação/Bacharelado 5.Pós-graduação;
+
+-   `region`: região do país (apenas Meio-Atlântico);
+
+-   `jobclass`: tipo de emprego (categoria): 1.Industrial 2.Informação;
+
+-   `health`: nível de saúde do trabalhador (categoria): 1.Saúde intermediária ou inferior 2.Saúde superior ou excelente;
+
+-   `health_ins`: possui plano de saúde (categoria): 1.Sim 2.Não;
+
+-   `logwage`: logaritmo do salário do trabalhador (número ponto flutuante);
+
+-   `wage`: salário bruto do trabalhador (número ponto flutuante).
+
+
+# Análise Exploratória dos Dados
+
+Em seguida, com as análises dos variáveis acima, podemos aprofundar mais para filtrar ou melhorar a base de dados fornecido, visando identicar possíveis ausências de dados, outliers, etc.
+
+```{r}
+library(skimr)
+skim(Wage)
+```
+
+Analisando com o resumo de dados acima, podemos notar que a base de dados é divido em 2 dataframe: 1. dados categórico (7 variáveis) 2. dados numéricos (4 variáveis). Nenhum deles apresenta valores perdidos "n_missing". Logo, aproveitando esses variáveis podemos analisar suas respectivas correlações nesta conjuntura de dados...
+
+
+# Análise de Correlação (Gráfico & Tabela)
+
+```{r}
+library(corrplot)
+
+num_col <- Wage[sapply(Wage, is.numeric)]
+
+corr <- cor(num_col, use = 'pairwise.complete.obs')
+
+corrplot(corr, method = 'circle')
+```
+Com o gráfico da correlação dos variáveis numéricos, podemos notar em que existe muita pouca correlação entre as variáveis indenpendentes, porém, especialmente a variável "logwage" podemos notar uma forte correlação com a variável "wage", ou seja, a variável resposta dos nossos dados.
+
+```{r}
+library(vcd)
+
+categorical_columns <- Wage[sapply(Wage, is.factor)]
+
+association_results <- data.frame(
+  Var1 = character(), 
+  Var2 = character(), 
+  CramerV = numeric(),
+  stringsAsFactors = FALSE
+)
+
+for (i in 1:(ncol(categorical_columns) - 1)) {
+  for (j in (i + 1):ncol(categorical_columns)) {
+    contingency_table <- table(categorical_columns[[i]], categorical_columns[[j]])  # Correção aqui
+    cramer_v <- assocstats(contingency_table)$cramer
+    association_results <- rbind(
+      association_results, 
+      data.frame(
+        Var1 = colnames(categorical_columns)[i],
+        Var2 = colnames(categorical_columns)[j],
+        CramerV = cramer_v
+      )
+    )
+  }
+}
+
+association_results
+```
+Em seguida, nesta tabela de correlação entre as variáveis categóricos independentes, podemos visualizar também a fraca correlação dos variáveis por meio dos valores de correlação calculado.
+
+Por final, com base do análise do gráfico (variáveis numéricos) e da tabela (variáveis categóricos), podemos concluir que a correlação existente entre as variáveis é mínima. Extraindo sinais sobre as variáveis tal como...
+
+1. A variável dependente é "wage".
+2. Não apresenta multicolinearidade para variável "year".
+3. Não apresenta multincolinearidade para variável "age".
+
+Além disso, nas correlações entre as variáveis categóricos independente é mínima, logo, podemos inferir uma baixa de existência da multicolinearidade através do Fator de Inflação da Variância (VIF) abaixo.
+
+
+# Análise da Multicolinearidade (VIF)
+
+```{r}
+sapply(Wage[, sapply(Wage, is.factor)], levels)
+```
+
+```{r}
+table(Wage$year)
+table(Wage$age)
+table(Wage$maritl)
+table(Wage$race)
+table(Wage$education)
+table(Wage$region)
+table(Wage$jobclass)
+table(Wage$health)
+table(Wage$health_ins)
+```
+
+# Modelo
+
+```{r}
+library(car)
+dados_filtrados <- Wage %>% select(-c(region, logwage))
+modelo <- lm(wage ~ ., data = dados_filtrados)
+vif(modelo)
+```
+Logo, podemos concluir que todas as variáveis realmente como sinalizados anteriormente não existe uma correlação forte, em que seus respectivos valores de VIF apresentaram abaixo de 10. Portanto, fica evidente que as variáveis independente explicam separadamente a variável resposta/dependente "wage" sem interferência dos outros.
+
+
+```{r}
+summary(modelo)
+```
+
+```{r}
+
+step(modelo)
+
+```
+
+```{r}
+
+plot(modelo)
+
+```
+
+Seguindo as observações dos gráficos da análise das relações entre variáveis e seus respectivos dispersão e padronização dos resíduos, podemos concluir que nosso modelo de regressão linear precisa de ajuste ainda, devido a falta da uniformidade/linearidade da distribuição do nosso resíduos.
+
+Primeiramente, deveríamos testar cada variável do nosso modelo para inferir seu respectivo influência no modelo.
+
+```{r}
+
+modelo1 <- update(modelo, ~. -year)
+
+summary(modelo1)
+
+```
+
+```{r}
+
+modelo1 <- update(modelo, ~. -age)
+
+summary(modelo1)
+
+```
+
+```{r}
+
+modelo1 <- update(modelo, ~. -maritl)
+
+summary(modelo1)
+
+```
+
+```{r}
+
+modelo1 <- update(modelo, ~. -race)
+
+summary(modelo1)
+
+```
+
+```{r}
+
+modelo1 <- update(modelo, ~. -education)
+
+summary(modelo1)
+
+```
+
+```{r}
+
+modelo1 <- update(modelo, ~. -jobclass)
+
+summary(modelo1)
+
+```
+
+```{r}
+
+modelo1 <- update(modelo, ~. -health)
+
+summary(modelo1)
+
+```
+Depois de ter analisado a influência de cada um dos variáveis do nosso modelo, podemos concluir que alguns deles tem pouca influência sobre o modelo, ou melhor uma influência negativa diminuindo o "R-squared". 
+
+Por conseguinte, deveríamos olhar e redefinir para o nosso caso base, aonde definimos o parâmetro do nosso modelo inicialmente, excluindo alguns variáveis que não explicam profundamente e de forma uníssona sobre a variável resposta tal como race, jobclass, etc.
+
+Além disso, podemos mudar o olhar da nossa variável de resposta "wage" para o "logwage", desde que percebemos uma não-linearidade dos pontos de dados residuais que provavelmente pode ser causado pela dispersão do intervalo da variável de resposta.
+
+# Modelo 2
+
+```{r}
+dados_filtrados <- Wage %>% select(-c(region, jobclass, race, health_ins, wage))
+modelo2 <- lm(logwage ~ ., data = dados_filtrados)
+summary(modelo2)
+```
+```{r}
+step(modelo2, direction='backward')
+```
+# Pressupostos do MRLM
+
+```{r}
+plot(modelo2)
+```
+
+Diante do que foi ajustado com os variáveis, descartando variáveis que impacta negativamente o modelo, podemos observar que foi obtido uma uniformidade dos nossos resíduos que anteriormente estava formando uma parábola.
+
+Além disso, é notório que existe alguns outliers no nosso base de dados, logo o sugerido para aprimorar o modelo seria a remoção dos outliers conforme mostrada nos passos abaixo.
+
+
+```{r}
+outliers <- outlierTest(modelo2)
+
+outliers
+```
+A partir dos dados acima podemos notar alguns outliers, com o valores identificados na tabela são aqueles com valores de resíduos padronizados (rstudent) extremos e p-valores ajustados por Bonferroni menores que 0.05. Então no próximo passo é remover eles dos nossos dados.
+
+```{r}
+
+outliers_indices <- c(7434, 155433, 156036, 159513, 86679, 160130, 160269, 228764, 452906, 2192,2822, 500, 359)
+
+wage_sem_outliers <- Wage %>% slice(-outliers_indices)
+
+glimpse(wage_sem_outliers)
+
+# checkar se ainda existe outliers ou não
+any(outliers_indices %in% rownames(wage_sem_outliers))
+```
+# Modelo 3
+
+```{r}
+
+dados_filtrados <- wage_sem_outliers %>% select(-c(region, jobclass, race, health_ins, wage))
+modelo3 <- lm(logwage ~ ., data = dados_filtrados)
+summary(modelo3)
+
+```
+Com os pequenos ajustes acima percemos que o 'R-squared' foi aprimorado, então o sugerido seria continuar com a eliminação dos variáveis que comprometem com as seguintes características:
+Linearidade, Independência dos Erros, Homoscedasticidade, Normalidade dos Erros, Ausência de Multicolinearidade, Independência das Observações;
+
+As observações no conjunto de dados devem ser independentes umas das outras. Isso é especialmente importante em dados de séries temporais ou dados agrupados.
+
+# Interpretações do modelo selecionado
+
+```{r}
+library(report)
+report(modelo2)
+```
+# Previsões
+
+Um breve resumo sobre os dados observados:
+
+```{r}
+summary(Wage)
+```
+E agora vamos criar um dataframe para calcular a estimação pontual e intervalar para dois valores médios da variável resposta a explicativa do nosso modelo...
+
+```{r}
+
+novos_dados_media <- data.frame(
+  year = c(2007, 2008),
+  age = c(30, 45),
+  maritl = factor(c("1. Never Married", "2. Married"), 
+                  levels = c("1. Never Married", "2. Married", "3. Widowed", "4. Divorced", "5. Separated")),
+  education = factor(c("2. HS Grad", "3. Some College"), 
+                     levels = c("1. < HS Grad", "2. HS Grad", "3. Some College", "4. College Grad", "5. Advanced Degree")),
+  health = factor(c("1. <=Good", "2. >=Very Good"), 
+                  levels = c("1. <=Good", "2. >=Very Good"))
+)
+
+estimativas <- predict(modelo3, newdata = novos_dados_media, interval = "confidence")
+
+estimativas
+```
+Agora, faremos previsões pontuais e intervalares para duas observações específicas...
+
+```{r}
+
+novos_dados_previsao <- data.frame(
+  year = c(2009, 2008),
+  age = c(50, 35),
+  maritl = factor(c("4. Divorced", "1. Never Married"), 
+                  levels = c("1. Never Married", "2. Married", "3. Widowed", "4. Divorced", "5. Separated")),
+  education = factor(c("4. College Grad", "2. HS Grad"), 
+                     levels = c("1. < HS Grad", "2. HS Grad", "3. Some College", "4. College Grad", "5. Advanced Degree")),
+  health = factor(c("2. >=Very Good", "1. <=Good"), 
+                  levels = c("1. <=Good", "2. >=Very Good"))
+)
+
+previsoes <- predict(modelo3, newdata = novos_dados_previsao, interval = "prediction")
+
+previsoes
+```
+# Conclusão
+
+Conclusão de Estimação
+
+Primeira Estimação:
+Estimação Pontual (fit): 4.319290
+Intervalo de Confiança (lwr, upr): [4.287592, 4.350988]
+Interpretação: Para uma combinação específica de características (ano = 2007, idade = 30, estado civil = nunca casado, educação = ensino médio completo, saúde = <=Good), o valor médio esperado de logwage é 4.319290. Estamos 95% confiantes de que o valor médio verdadeiro de logwage para essa combinação de características está entre 4.287592 e 4.350988.
+
+Segunda Estimação:
+Estimação Pontual (fit): 4.755296
+Intervalo de Confiança (lwr, upr): [4.727991, 4.782600]
+Interpretação: Para outra combinação de características (ano = 2008, idade = 45, estado civil = casado, educação = algum curso superior, saúde = >=Very Good), o valor médio esperado de logwage é 4.755296. Estamos 95% confiantes de que o valor médio verdadeiro de logwage para essa combinação de características está entre 4.727991 e 4.782600.
+
+Conclusão de Previsão
+
+Primeira Previsão:
+Previsão Pontual (fit): 4.792018
+Intervalo de Previsão (lwr, upr): [4.223358, 5.360677]
+Interpretação: Para uma observação específica (ano = 2009, idade = 50, estado civil = divorciado, educação = graduação completa, saúde = >=Very Good), o valor esperado de logwage é 4.792018. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 4.223358 e 5.360677. O intervalo de previsão é mais amplo do que o intervalo de confiança, refletindo a maior incerteza associada a prever um valor individual em vez de uma média.
+
+Segunda Previsão:
+Previsão Pontual (fit): 4.348553
+Intervalo de Previsão (lwr, upr): [3.781000, 4.916107]
+Interpretação: Para outra observação específica (ano = 2008, idade = 35, estado civil = nunca casado, educação = ensino médio completo, saúde = <=Good), o valor esperado de logwage é 4.348553. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 3.781000 e 4.916107. Novamente, o intervalo de previsão é mais amplo, refletindo a incerteza na previsão de um valor individual.
+
+Por conseguiente...
+
+As sstimações Pontuais e Intervalares: Fornecem uma faixa de valores esperados para a média da população com certas características, com um nível de confiança de 95%.
+
+E as previsões Pontuais e Intervalares: Fornecem uma faixa de valores esperados para observações individuais, com um nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
+
+
