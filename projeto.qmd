@@ -72,14 +72,14 @@ Além disso, ao analisar as características ou variáveis correlacionadas à va
 
 # Análise Exploratória dos Dados
 
-Em seguida, com as análises dos variáveis acima, podemos aprofundar mais para filtrar ou melhorar a base de dados fornecido, visando identicar possíveis ausências de dados, outliers, etc.
+Em seguida, com a análise das variáveis acima, podemos nos aprofundar mais para filtrar ou melhorar a base de dados fornecida, visando identificar possíveis ausências de dados, outliers, etc.
 
 ```{r}
 library(skimr)
 skim(Wage)
 ```
 
-Analisando com o resumo de dados acima, podemos notar que a base de dados é divido em 2 dataframe: 1. dados categórico (7 variáveis) 2. dados numéricos (4 variáveis). Nenhum deles apresenta valores perdidos "n_missing". Logo, aproveitando esses variáveis podemos analisar suas respectivas correlações nesta conjuntura de dados...
+Analisando com o resumo de dados acima, podemos notar que a base de dados é divida em 2 dataframes: 1. dados categóricos (7 variáveis) 2. dados numéricos (4 variáveis). Nenhum deles apresenta valores perdidos "n_missing". Logo, aproveitando essas variáveis podemos analisar suas respectivas correlações nesta conjuntura de dados...
 
 
 # Análise de Correlação (Gráfico & Tabela)
@@ -93,7 +93,7 @@ corr <- cor(num_col, use = 'pairwise.complete.obs')
 
 corrplot(corr, method = 'circle')
 ```
-Com o gráfico da correlação dos variáveis numéricos, podemos notar em que existe muita pouca correlação entre as variáveis indenpendentes, porém, especialmente a variável "logwage" podemos notar uma forte correlação com a variável "wage", ou seja, a variável resposta dos nossos dados.
+Com o gráfico da correlação das variáveis numéricas, podemos notar em que existe muita pouca correlação entre as variáveis indenpendentes. Porém, especialmente na variável "logwage", podemos notar uma forte correlação com a variável "wage", ou seja, a variável resposta dos nossos dados.
 
 ```{r}
 library(vcd)
@@ -124,15 +124,15 @@ for (i in 1:(ncol(categorical_columns) - 1)) {
 
 association_results
 ```
-Em seguida, nesta tabela de correlação entre as variáveis categóricos independentes, podemos visualizar também a fraca correlação dos variáveis por meio dos valores de correlação calculado.
+Em seguida, nesta tabela de correlação entre as variáveis categóricas independentes, podemos visualizar também a fraca correlação das variáveis por meio dos valores de correlação calculados.
 
-Por final, com base do análise do gráfico (variáveis numéricos) e da tabela (variáveis categóricos), podemos concluir que a correlação existente entre as variáveis é mínima. Extraindo sinais sobre as variáveis tal como...
+Por fim, com base do análise do gráfico (variáveis numéricas) e da tabela (variáveis categóricas), podemos concluir que a correlação existente entre as variáveis é mínima. Extraindo sinais sobre as variáveis tal como...
 
 1. A variável dependente é "wage".
 2. Não apresenta multicolinearidade para variável "year".
 3. Não apresenta multincolinearidade para variável "age".
 
-Além disso, nas correlações entre as variáveis categóricos independente é mínima, logo, podemos inferir uma baixa de existência da multicolinearidade através do Fator de Inflação da Variância (VIF) abaixo.
+Além disso, as correlações entre as variáveis categóricas independentes é mínima, logo, podemos inferir uma baixa existência da multicolinearidade através do Fator de Inflação da Variância (VIF) abaixo.
 
 
 # Análise da Multicolinearidade (VIF)
@@ -161,13 +161,19 @@ dados_filtrados <- Wage %>% select(-c(region, logwage))
 modelo <- lm(wage ~ ., data = dados_filtrados)
 vif(modelo)
 ```
-Logo, podemos concluir que todas as variáveis realmente como sinalizados anteriormente não existe uma correlação forte, em que seus respectivos valores de VIF apresentaram abaixo de 10. Portanto, fica evidente que as variáveis independente explicam separadamente a variável resposta/dependente "wage" sem interferência dos outros.
+Logo, podemos concluir que todas as variáveis realmente não possuem uma correlação forte, já que seus respectivos
+valores de VIF apresentaram valores abaixo de 10. Portanto, fica evidente que as variáveis independentes, explicam
+separadamente a variável resposta/dependente "wage" sem interferência das outras.
 
 
 ```{r}
 summary(modelo)
 ```
+Nesse modelo temos um R-quadrado de 0.3361, o que indica que aproximadamente 33.61% da variação do salário é
+explicada pelas variáveis incluídas. Com esse modelo também podemos tirar algumas conclusões como:
 
+- A variável "health_ins2. No" tem um efeito negativo significativo no salário (-17.51, p < 2e-16).
+- A variável "education5. Advanced Degree" têm um efeito positivo significativo no salário (53.95, p < 2e-16).
 ```{r}
 
 step(modelo)
@@ -180,9 +186,9 @@ plot(modelo)
 
 ```
 
-Seguindo as observações dos gráficos da análise das relações entre variáveis e seus respectivos dispersão e padronização dos resíduos, podemos concluir que nosso modelo de regressão linear precisa de ajuste ainda, devido a falta da uniformidade/linearidade da distribuição do nosso resíduos.
+Seguindo as observações dos gráficos de análise das relações entre variáveis e suas respectivas dispersões e padronização dos resíduos, podemos concluir que nosso modelo de regressão linear ainda precisa de ajuste, devido a falta da uniformidade/linearidade da distribuição do nosso resíduos.
 
-Primeiramente, deveríamos testar cada variável do nosso modelo para inferir seu respectivo influência no modelo.
+Primeiramente, deveríamos testar cada variável do nosso modelo para inferir sua respectiva influência no modelo.
 
 ```{r}
 
@@ -224,6 +230,9 @@ summary(modelo1)
 
 ```
 
+- Ao remover a variável education podemos ver um impacto muito significativo no modelo. O R-quadrado caiu de 33.61%
+para 20.55%, o que indica que a variável education tem um grande correlação com a nossa variável em estudo.
+
 ```{r}
 
 modelo1 <- update(modelo, ~. -jobclass)
@@ -239,9 +248,10 @@ modelo1 <- update(modelo, ~. -health)
 summary(modelo1)
 
 ```
-Depois de ter analisado a influência de cada um dos variáveis do nosso modelo, podemos concluir que alguns deles tem pouca influência sobre o modelo, ou melhor uma influência negativa diminuindo o "R-squared". 
 
-Por conseguinte, deveríamos olhar e redefinir para o nosso caso base, aonde definimos o parâmetro do nosso modelo inicialmente, excluindo alguns variáveis que não explicam profundamente e de forma uníssona sobre a variável resposta tal como race, jobclass, etc.
+Depois de ter analisado a influência de cada um das variáveis do nosso modelo, podemos concluir que algumas delas têm pouca influência sobre o modelo, ou melhor uma influência negativa diminuindo o "R-squared". 
+
+Por conseguinte, deveríamos olhar e redefinir o nosso caso base, onde definimos o parâmetro do nosso modelo inicialmente, excluindo algumas variáveis que não explicam profundamente e de forma uníssona sobre a variável resposta tal como race, jobclass, etc.
 
 Além disso, podemos mudar o olhar da nossa variável de resposta "wage" para o "logwage", desde que percebemos uma não-linearidade dos pontos de dados residuais que provavelmente pode ser causado pela dispersão do intervalo da variável de resposta.
 
@@ -252,18 +262,32 @@ dados_filtrados <- Wage %>% select(-c(region, jobclass, race, health_ins, wage))
 modelo2 <- lm(logwage ~ ., data = dados_filtrados)
 summary(modelo2)
 ```
+
+Com esse segundo modelo podemos tirar algumas conclusões:
+
+- O R-quadrado teve uma pequena queda para 30.84%, porém o erro padrão residual é de 0.2925, o que mostra que o
+modelo tem uma precisão razoável para os dados transformados em log.
+- O coeficiente de year (0.01171) indica que, para cada ano adicional, espera-se um aumento de aproximadamente 1.17%
+no salário, assumindo que as demais variáveis são constantes, o que é altamente significativo com um valor p muito
+baixo (9.74e-06).
+- Ter um grau avançado de educação (education5. Advanced Degree) resulta em um aumento esperado de aproximadamente
+51.06% no log do salário, que se traduz em um efeito substancial no salário real.
+
 ```{r}
 step(modelo2, direction='backward')
 ```
+
 # Pressupostos do MRLM
 
 ```{r}
 plot(modelo2)
 ```
 
-Diante do que foi ajustado com os variáveis, descartando variáveis que impacta negativamente o modelo, podemos observar que foi obtido uma uniformidade dos nossos resíduos que anteriormente estava formando uma parábola.
+Diante do que foi ajustado com as variáveis, descartando variáveis que impactam negativamente o modelo, podemos
+observar que foi obtido uma uniformidade dos nossos resíduos que anteriormente estavam formando uma parábola.
 
-Além disso, é notório que existe alguns outliers no nosso base de dados, logo o sugerido para aprimorar o modelo seria a remoção dos outliers conforme mostrada nos passos abaixo.
+Além disso, é notório que existe alguns outliers na nossa base de dados. Logo, o sugerido para aprimorar o modelo
+seria a remoção dos outliers conforme mostrado nos passos abaixo.
 
 
 ```{r}
@@ -271,7 +295,10 @@ outliers <- outlierTest(modelo2)
 
 outliers
 ```
-A partir dos dados acima podemos notar alguns outliers, com o valores identificados na tabela são aqueles com valores de resíduos padronizados (rstudent) extremos e p-valores ajustados por Bonferroni menores que 0.05. Então no próximo passo é remover eles dos nossos dados.
+
+A partir dos dados acima podemos notar alguns outliers, os valores identificados na tabela são aqueles com valores de
+resíduos padronizados (rstudent) extremos e p-valores ajustados por Bonferroni menores que 0.05. Então o próximo
+passo é remover eles dos nossos dados.
 
 ```{r}
 
@@ -293,17 +320,74 @@ modelo3 <- lm(logwage ~ ., data = dados_filtrados)
 summary(modelo3)
 
 ```
-Com os pequenos ajustes acima percemos que o 'R-squared' foi aprimorado, então o sugerido seria continuar com a eliminação dos variáveis que comprometem com as seguintes características:
-Linearidade, Independência dos Erros, Homoscedasticidade, Normalidade dos Erros, Ausência de Multicolinearidade, Independência das Observações;
+Com os pequenos ajustes acima percemos que o 'R-squared' foi aprimorado (além do erro residual ter diminuido para
+0.289), então o sugerido seria continuar com a eliminação das variáveis que comprometem as seguintes características:
+Linearidade, Independência dos Erros, Homoscedasticidade, Normalidade dos Erros, Ausência de Multicolinearidade,
+Independência das Observações;
 
-As observações no conjunto de dados devem ser independentes umas das outras. Isso é especialmente importante em dados de séries temporais ou dados agrupados.
+As observações no conjunto de dados devem ser independentes umas das outras. Isso é especialmente importante em dados
+de séries temporais ou dados agrupados.
 
 # Interpretações do modelo selecionado
 
 ```{r}
 library(report)
-report(modelo2)
+report(modelo3)
 ```
+Fizemos uma análise usando um modelo de regressão linear (estimado por Mínimos Quadrados Ordinários - OLS) para
+prever o logaritmo do salário (logwage) com base nas variáveis: ano (year), idade (age), estado civil (maritl), nível
+de escolaridade (education) e saúde (health). O modelo mostra que essas variáveis explicam uma parte significativa da
+variação no logaritmo do salário (R² = 0,32), o que significa que cerca de 32% da variação nos salários pode ser
+atribuída a essas variáveis. A estatística F do modelo é alta (F(11, 2984) = 126,05, p < 0,001), indicando que o
+modelo é estatisticamente significativo.
+
+Interpretação dos Resultados do Modelo:
+Intercepto: O intercepto do modelo é de -19,11, o que representa o valor estimado do logaritmo do salário quando
+todas as variáveis independentes são iguais a zero. Isso é apenas uma referência e não é interpretável na prática,
+pois uma idade de 0, estado civil "nunca casado", escolaridade "menos que o ensino médio" e saúde "ruim" não
+representam uma situação realista.
+
+Ano (year): A cada ano adicional, o logaritmo do salário aumenta em média 0,01 (ou seja, cerca de 1% quando
+transformado de logarítmico para o valor original). Isso indica uma tendência positiva nos salários ao longo do
+tempo. O efeito é estatisticamente significativo (p < 0,001).
+
+Idade (age): A cada ano a mais de idade, o logaritmo do salário também aumenta em média 0,0035, indicando que pessoas
+mais velhas tendem a ganhar salários ligeiramente mais altos. Esse efeito também é estatisticamente significativo (p
+< 0,001).
+
+Estado Civil (maritl):
+
+- Casado: Pessoas casadas tendem a ganhar em média 0,18 a mais no logaritmo do salário em comparação com aquelas que
+nunca se casaram, o que é um efeito considerável e estatisticamente significativo (p < 0,001).
+- Viúvo: Não há efeito significativo no salário para viúvos (p = 0,456).
+- Divorciado: O efeito é positivo (0,07) e estatisticamente significativo (p = 0,002), sugerindo que divorciados
+ganham mais em comparação com os que nunca se casaram, mas o efeito é menor em relação aos casados.
+- Separado: O efeito é positivo e significativo (0,13, p = 0,001), indicando um aumento considerável no salário em
+relação a quem nunca se casou.
+
+Educação (education):
+
+Cada nível de escolaridade adicional tem um efeito positivo significativo no logaritmo do salário:
+- Ensino Médio: Aumento de 0,12, significativo (p < 0,001).
+- Algum Ensino Superior: Aumento de 0,24, significativo (p < 0,001).
+- Graduação: Aumento de 0,35, significativo (p < 0,001).
+- Pós-Graduação: Aumento de 0,51, significativo (p < 0,001). 
+Isso mostra que quanto mais alto o nível de
+escolaridade, maior é o salário, com os pós-graduados tendo o maior impacto.
+
+Saúde (health):
+
+Aqueles com saúde "muito boa" ou melhor ganham em média 0,07 a mais no logaritmo do salário em comparação com aqueles
+com saúde "boa" ou pior. Este efeito é estatisticamente significativo (p < 0,001), indicando que uma melhor saúde
+está associada a salários mais altos.
+
+Conclusão Prática:
+Esses resultados indicam que fatores como a escolaridade, o estado civil e a saúde têm impactos positivos e
+significativos nos salários. Especificamente, o aumento da escolaridade e a melhoria na saúde são associados a
+salários mais altos, enquanto o estado civil de ser casado também está fortemente associado a ganhos maiores. Esses
+insights podem ser valiosos para formuladores de políticas e para pessoas que buscam melhorar sua posição no mercado
+de trabalho, enfatizando a importância da educação e da saúde.
+
 # Previsões
 
 Um breve resumo sobre os dados observados:
@@ -311,7 +395,7 @@ Um breve resumo sobre os dados observados:
 ```{r}
 summary(Wage)
 ```
-E agora vamos criar um dataframe para calcular a estimação pontual e intervalar para dois valores médios da variável resposta a explicativa do nosso modelo...
+E agora vamos criar um dataframe para calcular a estimação pontual e intervalar para dois valores médios da variável resposta, a explicativa do nosso modelo...
 
 ```{r}
 
@@ -349,7 +433,6 @@ previsoes <- predict(modelo3, newdata = novos_dados_previsao, interval = "predic
 
 previsoes
 ```
-# Conclusão
 
 Conclusão de Estimação
 
@@ -361,24 +444,91 @@ Interpretação: Para uma combinação específica de características (ano = 20
 Segunda Estimação:
 Estimação Pontual (fit): 4.755296
 Intervalo de Confiança (lwr, upr): [4.727991, 4.782600]
-Interpretação: Para outra combinação de características (ano = 2008, idade = 45, estado civil = casado, educação = algum curso superior, saúde = >=Very Good), o valor médio esperado de logwage é 4.755296. Estamos 95% confiantes de que o valor médio verdadeiro de logwage para essa combinação de características está entre 4.727991 e 4.782600.
+Interpretação: Para outra combinação de características (ano = 2008, idade = 45, estado civil = casado, educação =
+algum curso superior, saúde = >=Very Good), o valor médio esperado de logwage é 4.755296. Estamos 95% confiantes de
+que o valor médio verdadeiro de logwage para essa combinação de características está entre 4.727991 e 4.782600.
 
 Conclusão de Previsão
 
 Primeira Previsão:
 Previsão Pontual (fit): 4.792018
 Intervalo de Previsão (lwr, upr): [4.223358, 5.360677]
-Interpretação: Para uma observação específica (ano = 2009, idade = 50, estado civil = divorciado, educação = graduação completa, saúde = >=Very Good), o valor esperado de logwage é 4.792018. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 4.223358 e 5.360677. O intervalo de previsão é mais amplo do que o intervalo de confiança, refletindo a maior incerteza associada a prever um valor individual em vez de uma média.
+Interpretação: Para uma observação específica (ano = 2009, idade = 50, estado civil = divorciado, educação =
+graduação completa, saúde = >=Very Good), o valor esperado de logwage é 4.792018. Estamos 95% confiantes de que o
+valor verdadeiro de logwage para essa observação estará entre 4.223358 e 5.360677. O intervalo de previsão é mais
+amplo do que o intervalo de confiança, refletindo a maior incerteza associada a prever um valor individual em vez de
+uma média.
 
 Segunda Previsão:
 Previsão Pontual (fit): 4.348553
 Intervalo de Previsão (lwr, upr): [3.781000, 4.916107]
-Interpretação: Para outra observação específica (ano = 2008, idade = 35, estado civil = nunca casado, educação = ensino médio completo, saúde = <=Good), o valor esperado de logwage é 4.348553. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 3.781000 e 4.916107. Novamente, o intervalo de previsão é mais amplo, refletindo a incerteza na previsão de um valor individual.
+Interpretação: Para outra observação específica (ano = 2008, idade = 35, estado civil = nunca casado, educação =
+ensino médio completo, saúde = <=Good), o valor esperado de logwage é 4.348553. Estamos 95% confiantes de que o valor
+verdadeiro de logwage para essa observação estará entre 3.781000 e 4.916107. Novamente, o intervalo de previsão é
+mais amplo, refletindo a incerteza na previsão de um valor individual.
 
 Por conseguiente...
 
-As sstimações Pontuais e Intervalares: Fornecem uma faixa de valores esperados para a média da população com certas características, com um nível de confiança de 95%.
+As estimações Pontuais e Intervalares: Fornecem uma faixa de valores esperados para a média da população com certas
+características, com um nível de confiança de 95%.
 
-E as previsões Pontuais e Intervalares: Fornecem uma faixa de valores esperados para observações individuais, com um nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
+E as previsões Pontuais e Intervalares: Fornecem uma faixa de valores esperados para observações individuais, com um
+nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
 
 
+# Conclusão e principais resultados do projeto
+
+A análise dos modelos de regressão desenvolvidos para prever o salário (wage) e o logaritmo do salário (logwage)
+oferece uma visão abrangente sobre as variáveis que influenciam os rendimentos dos indivíduos na amostra. Segue
+uma análise de cada modelo e das melhorias observadas:
+
+1. Modelo de Regressão Linear Simples (wage)
+O primeiro modelo, que analisa o salário diretamente, apresentou um R² ajustado de 0.3361, indicando que
+aproximadamente 33,61% da variação no salário pode ser explicada pelas variáveis independentes incluídas. Os
+coeficientes significativos, como year e age, mostraram que, para cada ano a mais de experiência, há um aumento
+significativo no salário, enquanto a idade também apresenta uma relação positiva. Além disso, o estado civil e o
+nível educacional se destacam, com os casados e aqueles com maior escolaridade apresentando rendimentos mais
+elevados.
+
+Os testes de significância revelaram que a maioria das variáveis, com exceção de algumas categorias de estado civil e
+raça, são estatisticamente significativas (p < 0.05). O erro padrão residual foi de 34, sugerindo uma dispersão
+considerável nos salários previstos em relação aos salários reais.
+
+2. Modelo de Regressão Logarítmica (logwage)
+O segundo modelo, que utiliza a transformação logarítmica do salário, apresentou uma redução no erro padrão residual
+para 0.2925 e um R² ajustado de 0.3084. A transformação logarítmica é útil neste contexto, pois permite uma
+interpretação dos coeficientes em termos de percentagens, facilitando a compreensão dos efeitos proporcionais das
+variáveis independentes sobre os salários.
+
+Os coeficientes do modelo logarítmico mostraram que, ao contrário do modelo original, a interpretação se torna mais
+direta: um aumento de um ano na experiência resulta em um aumento percentual no salário, assim como o aumento na
+idade. As variáveis de estado civil e educação mantiveram sua relevância, com resultados significativos em todas as
+categorias, exceto para os viúvos. Os resultados indicaram que a condição de saúde teve um impacto positivo e
+significativo nos salários.
+
+3. Modelo de Regressão Logarítmica Melhorado
+O terceiro modelo, semelhante ao segundo, também se concentrou na variável logwage. No entanto, este modelo
+apresentou uma leve melhoria em comparação ao segundo, com um R² ajustado de 0.3147 e um erro padrão residual de
+0.289. A melhoria pode ser atribuída à inclusão de variáveis que capturam mais adequadamente a variação no logaritmo
+do salário.
+
+As variáveis que mantiveram significância e relevância no terceiro modelo foram consistentes com os resultados
+anteriores. A interpretação dos coeficientes é a mesma, mas os resultados mostram que o ajuste adicional ao modelo
+melhorou a explicação da variação no logwage.
+
+# Análise Comparativa e Considerações Finais
+
+Comparando os modelos, observa-se que a transformação logarítmica é benéfica para a interpretação dos resultados e
+para a redução da variabilidade dos erros. Embora o modelo de salário direto (modelo 1) tenha um R² ligeiramente
+maior, os modelos logarítmicos oferecem uma perspectiva mais robusta sobre a relação percentual entre as variáveis
+independentes e os salários.
+
+Além disso, a análise de VIF não indicou problemas significativos de multicolinearidade, o que é um sinal positivo
+para a confiabilidade dos coeficientes estimados. O uso de múltiplos modelos para verificar a robustez dos
+resultados reforça a importância de variáveis como educação e estado civil na determinação do salário, sugerindo que
+políticas voltadas para a educação e a melhoria das condições de trabalho podem ser eficazes na elevação dos
+rendimentos.
+
+Em suma, a análise técnica dos modelos de regressão sugere que a inclusão de variáveis que capturam a experiência, a
+educação e a saúde são fundamentais para a compreensão da estrutura salarial na amostra estudada, oferecendo insights
+valiosos para futuras pesquisas e formulação de políticas.
