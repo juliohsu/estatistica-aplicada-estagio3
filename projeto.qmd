@@ -476,6 +476,145 @@ E as previsões Pontuais e Intervalares: Fornecem uma faixa de valores esperados
 nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
 
 
+
+# Modelo 4
+
+```{r}
+
+dados_filtrados_poly <- wage_sem_outliers %>%
+  select(-c(region, jobclass, race, health_ins, wage)) %>%
+  mutate(age_poly = poly(age, 2, raw = TRUE), 
+         year_poly = poly(year, 2, raw = TRUE)) 
+
+```
+Após a avaliação do modelo, observou-se que o coeficiente de determinação (
+𝑅
+2
+R 
+2
+ ) foi de 0,32, indicando que aproximadamente 32% da variação no logwage pode ser explicada pelas variáveis incluídas.
+
+Além disso, foi observado que o erro residual médio do modelo se estabilizou em 0,083, sugerindo que o modelo está realizando previsões razoáveis.
+Diante disso, recomenda-se a continuidade da análise, buscando eliminar variáveis que possam comprometer as seguintes suposições fundamentais da regressão linear.
+
+# Interpretações do modelo selecionado
+
+```{r}
+library(report)
+report(modelo4_ridge)
+```
+Fizemos uma análise utilizando um modelo de regressão linear regularizado (Ridge) para prever o logaritmo do salário (logwage) com base nas variáveis: ano (year),
+idade (age), estado civil (maritl), nível de escolaridade (education) e saúde (health). O modelo mostra que essas variáveis explicam uma parte significativa da variação
+no logaritmo do salário (R² = 0,34), indicando que cerca de 34% da variação nos salários pode ser atribuída a essas variáveis. A estatística F do modelo é alta
+(F(11, 2984) = 145,36, p < 0,001), sugerindo que o modelo é estatisticamente significativo.
+
+Interpretação dos Resultados do Modelo:
+Intercepto: O intercepto do modelo é de -13,39, o que representa o valor estimado do logaritmo do salário quando todas as variáveis independentes são iguais a zero. Embora isso não seja interpretável na prática, pois uma idade de 0 anos, estado civil "nunca casado",
+ escolaridade "menos que o ensino médio" e saúde "ruim" não representam uma situação realista, fornece uma referência para o modelo.
+
+Ano (year): A cada ano adicional, o logaritmo do salário aumenta em média 0,0058 (ou seja, cerca de 0,58% quando transformado
+de logarítmico para o valor original). Isso indica uma tendência positiva nos salários ao longo do tempo. O efeito é estatisticamente significativo (p < 0,001).
+
+Idade (age): A cada ano a mais de idade, o logaritmo do salário aumenta em média 0,0099, sugerindo que pessoas mais velhas tendem a ganhar salários significativamente mais altos.
+Este efeito é estatisticamente significativo (p < 0,001).
+
+Estado Civil (maritl):
+
+Para pessoas casadas, o logaritmo do salário aumenta em média 0,1614 em comparação aos que nunca foram casados, sendo este efeito estatisticamente significativo (p < 0,001).
+As pessoas viúvas têm um aumento médio de 0,0425 em relação ao estado civil "nunca casado" (p = 0,65), indicando que esse efeito não é estatisticamente significativo.
+Os divorciados apresentam um aumento médio de 0,0604, enquanto os separados têm um aumento médio de 0,1024, ambos em comparação aos que nunca foram casados, mas não são estatisticamente significativos.
+
+Nível de Escolaridade (education):
+
+Aqueles com o ensino médio completo têm um aumento médio de 0,0558 no logaritmo do salário, enquanto os que têm alguma faculdade apresentam um aumento de 0,1770, e os graduados aumentam em média 0,2818.
+Por fim, aqueles com diploma avançado apresentam um aumento médio de 0,4398. Todos esses efeitos são estatisticamente significativos (p < 0,001).
+
+Saúde (health):
+
+Para aqueles com saúde considerada "muito boa", há um aumento médio de 0,0699 no logaritmo do salário em comparação aos que têm saúde "ruim",
+ sendo este efeito estatisticamente significativo (p < 0,001).
+
+Conclusão Prática:
+O Modelo 4, ao incorporar a regularização Ridge e ajustes polinomiais, demonstrou uma melhoria na capacidade preditiva em relação ao Modelo 3, com um menor erro quadrático médio (0.0824 vs. 0.0832) e um R² levemente aprimorado,
+indicando que as variáveis selecionadas fornecem explicações mais robustas sobre os salários em relação ao modelo anterior.
+
+# Previsões
+
+Um breve resumo sobre os dados observados:
+
+```{r}
+summary(Wage)
+```
+E agora vamos criar um dataframe para calcular a estimação pontual e intervalar para dois valores médios da variável resposta, a explicativa do nosso modelo...
+
+```{r}
+
+novos_dados_media <- data.frame(
+  year = c(2007, 2008),
+  age = c(30, 45),
+  maritl = factor(c("1. Never Married", "2. Married"), 
+                  levels = c("1. Never Married", "2. Married", "3. Widowed", "4. Divorced", "5. Separated")),
+  education = factor(c("2. HS Grad", "3. Some College"), 
+                     levels = c("1. < HS Grad", "2. HS Grad", "3. Some College", "4. College Grad", "5. Advanced Degree")),
+  health = factor(c("1. <=Good", "2. >=Very Good"), 
+                  levels = c("1. <=Good", "2. >=Very Good"))
+)
+
+estimativas <- predict(modelo4_ridge, newdata = novos_dados_media, interval = "confidence")
+
+estimativas
+
+```
+
+Conclusão de Estimação
+Primeira Estimação:
+
+Estimação Pontual (fit): 4.319290
+Intervalo de Confiança (lwr, upr): [4.287592, 4.350988]
+Interpretação: Para uma combinação específica de características (ano = 2007, idade = 30, estado civil = nunca casado, educação = ensino médio completo, saúde = <=Good), o valor médio esperado de logwage é 4.319290. Estamos 95% confiantes de que o valor médio verdadeiro de logwage para essa combinação de características está entre 4.287592 e 4.350988.
+Segunda Estimação:
+
+Estimação Pontual (fit): 4.755296
+Intervalo de Confiança (lwr, upr): [4.727991, 4.782600]
+Interpretação: Para outra combinação de características (ano = 2008, idade = 45, estado civil = casado, educação = algum curso superior, saúde = >=Very Good), o valor médio esperado de logwage é 4.755296. Estamos 95% confiantes de que o valor médio verdadeiro de logwage para essa combinação de características está entre 4.727991 e 4.782600.
+
+
+Agora, faremos previsões pontuais e intervalares para duas observações específicas...
+
+```{r}
+
+novos_dados_previsao <- data.frame(
+  year = c(2009, 2008),
+  age = c(50, 35),
+  maritl = factor(c("4. Divorced", "1. Never Married"), 
+                  levels = c("1. Never Married", "2. Married", "3. Widowed", "4. Divorced", "5. Separated")),
+  education = factor(c("4. College Grad", "2. HS Grad"), 
+                     levels = c("1. < HS Grad", "2. HS Grad", "3. Some College", "4. College Grad", "5. Advanced Degree")),
+  health = factor(c("2. >=Very Good", "1. <=Good"), 
+                  levels = c("1. <=Good", "2. >=Very Good"))
+)
+
+previsoes <- predict(modelo4_ridge, newdata = novos_dados_previsao, interval = "prediction")
+
+previsoes
+```
+
+Conclusão de Previsão
+Primeira Previsão:
+
+Previsão Pontual (fit): 4.792018
+Intervalo de Previsão (lwr, upr): [4.223358, 5.360677]
+Interpretação: Para uma observação específica (ano = 2009, idade = 50, estado civil = divorciado, educação = graduação completa, saúde = >=Very Good), o valor esperado de logwage é 4.792018. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 4.223358 e 5.360677. O intervalo de previsão é mais amplo do que o intervalo de confiança, refletindo a maior incerteza associada a prever um valor individual em vez de uma média.
+Segunda Previsão:
+
+Previsão Pontual (fit): 4.348553
+Intervalo de Previsão (lwr, upr): [3.781000, 4.916107]
+Interpretação: Para outra observação específica (ano = 2008, idade = 35, estado civil = nunca casado, educação = ensino médio completo, saúde = <=Good), o valor esperado de logwage é 4.348553. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 3.781000 e 4.916107. Novamente, o intervalo de previsão é mais amplo, refletindo a incerteza na previsão de um valor individual.
+Por conseguinte...
+As estimações pontuais e intervalares fornecem uma faixa de valores esperados para a média da população com certas características, com um nível de confiança de 95%.
+
+As previsões pontuais e intervalares fornecem uma faixa de valores esperados para observações individuais, com um nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
+
 # Conclusão e principais resultados do projeto
 
 A análise dos modelos de regressão desenvolvidos para prever o salário (wage) e o logaritmo do salário (logwage)
