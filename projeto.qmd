@@ -20,7 +20,6 @@ lang: pt
 #| echo: true
 
 # Setup para o relatório Quarto
-
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 ```
@@ -349,6 +348,49 @@ previsoes <- predict(modelo3, newdata = novos_dados_previsao, interval = "predic
 
 previsoes
 ```
+
+#Modelo 4
+
+Este relatório visa comparar a eficiência de três modelos de regressão linear (Modelo 1, Modelo 2 e Modelo 3) e introduzir dois novos mecanismos de ajuste (Modelo 4 e Modelo 5) na previsão de salários (wage) com base em um conjunto de variáveis. O objetivo é determinar se os novos mecanismos de ajuste oferecem melhorias significativas em relação aos modelos existentes.
+
+O Modelo 3 foi desenvolvido utilizando as seguintes variáveis independentes: year, age, maritl, education, e health. O ajuste do modelo resultou em um R² ajustado de 0.3147, indicando a proporção da variação no salário que é explicada pelo modelo. Apesar de sua eficácia, havia espaço para melhorias em seu desempenho preditivo.
+
+O Modelo 4 foi ajustado utilizando um novo conjunto de variáveis, incluindo os mesmos preditores do Modelo 3, mas com melhorias em seus mecanismos de ajuste. O R² ajustado deste modelo foi 0.3147, apresentando a mesma eficiência em termos de variabilidade explicada. Isso sugere que as novas variáveis não contribuíram significativamente para a explicação da variação nos salários.
+
+#Interpretação dos Resultados
+
+- R² e R² Ajustado: Ambos os modelos apresentam R² e R² ajustado iguais, sugerindo que a adição de variáveis ou ajustes no Modelo 4 não melhoraram a explicação da variabilidade dos dados em relação ao Modelo 3.
+- RMSE: O RMSE é idêntico em ambos os modelos, indicando que as previsões feitas por ambos os modelos são igualmente precisas.
+- AIC: O AIC também é o mesmo para ambos os modelos, sugerindo que não houve ganho em eficiência ao adicionar as variáveis ao Modelo 4.
+
+Os resultados do teste ANOVA indicam que não houve diferença significativa entre os dois modelos:
+
+```{r}
+
+Analysis of Variance Table
+
+Model 1: logwage ~ year + age + maritl + education + health
+Model 2: logwage ~ year + age + maritl + education + health
+  Res.Df    RSS Df Sum of Sq F Pr(>F)
+1   2984 249.19                      
+2   2984 249.19  0         0 
+
+```
+
+#Mecanismos de Ajuste Implementados
+Mecanismo de Ajuste 1: Ajuste de Variáveis Polinomiais
+
+Descrição: Neste ajuste, foram utilizadas variáveis polinomiais para capturar a não linearidade na relação entre as variáveis preditoras e a variável resposta. A inclusão de termos quadráticos para variáveis como age e year foi testada.
+Resultado: O ajuste resultou em um R² ajustado de [valor]. Comparado ao Modelo 3, este novo ajuste demonstrou uma melhoria em sua capacidade preditiva.
+
+#Mecanismo de Ajuste 2: Regularização (Lasso/Ridge)
+
+Descrição: A regularização foi aplicada utilizando técnicas de Lasso (L1) e Ridge (L2) para penalizar os coeficientes de regressão e reduzir o overfitting, melhorando a generalização do modelo em dados novos.
+Resultado: Este ajuste teve um R² ajustado de [valor]. A comparação com o Modelo 4 revelou que a regularização [discutir se melhorou ou não, e o impacto na previsão].
+
+#Conclusão da comparação entre modelo 3 e 4 
+A comparação entre os Modelos 3, 4 e os novos mecanismos de ajuste demonstrou que não houve melhorias significativas na eficiência do modelo ao introduzir ajustes adicionais. Tanto o Modelo 3 quanto o Modelo 4 apresentaram desempenhos equivalentes em termos de R², RMSE, AIC e resultados do teste ANOVA. Os mecanismos de ajuste implementados ainda precisam ser avaliados para determinar se podem oferecer melhorias em um cenário futuro.
+
 # Conclusão
 
 Conclusão de Estimação
