@@ -377,6 +377,41 @@ Model 2: logwage ~ year + age + maritl + education + health
 
 ```
 
+#Summary modelo 4 
+
+```{r}
+
+Call:
+lm(formula = logwage ~ year + age + maritl + education + health, 
+    data = dados_filtrados)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1.45752 -0.15173  0.00797  0.16506  1.25347 
+
+Coefficients:
+                              Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                 -1.911e+01  5.241e+00  -3.646 0.000271 ***
+year                         1.156e-02  2.613e-03   4.424 1.00e-05 ***
+age                          3.540e-03  5.224e-04   6.777 1.48e-11 ***
+maritl2. Married             1.757e-01  1.452e-02  12.103  < 2e-16 ***
+maritl3. Widowed             5.062e-02  6.797e-02   0.745 0.456455    
+maritl4. Divorced            7.483e-02  2.455e-02   3.048 0.002327 ** 
+maritl5. Separated           1.324e-01  4.114e-02   3.219 0.001301 ** 
+education2. HS Grad          1.166e-01  1.999e-02   5.835 5.97e-09 ***
+education3. Some College     2.425e-01  2.109e-02  11.502  < 2e-16 ***
+education4. College Grad     3.509e-01  2.102e-02  16.695  < 2e-16 ***
+education5. Advanced Degree  5.144e-01  2.290e-02  22.461  < 2e-16 ***
+health2. >=Very Good         6.971e-02  1.205e-02   5.783 8.09e-09 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.289 on 2984 degrees of freedom
+Multiple R-squared:  0.3172,	Adjusted R-squared:  0.3147 
+F-statistic:   126 on 11 and 2984 DF,  p-value: < 2.2e-16
+
+```
+
 #Mecanismos de Ajuste Implementados
 Mecanismo de Ajuste 1: Ajuste de Variáveis Polinomiais
 
