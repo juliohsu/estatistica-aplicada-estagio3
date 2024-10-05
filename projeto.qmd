@@ -481,62 +481,48 @@ nível de confiança de 95%, mas com maior incerteza devido à variabilidade ind
 
 ```{r}
 
-dados_filtrados_poly <- wage_sem_outliers %>%
-  select(-c(region, jobclass, race, health_ins, wage)) %>%
-  mutate(age_poly = poly(age, 2, raw = TRUE), 
-         year_poly = poly(year, 2, raw = TRUE)) 
+dados_filtrados_4 <- wage_sem_outliers %>% 
+  select(-c(region, jobclass, race, health_ins, wage, education, health))
+dados_filtrados_4$idade_ao_quadrado <- dados_filtrados_4$age^2
+dados_filtrados_4$interacao_ano_idade <- dados_filtrados_4$year * dados_filtrados_4$age
+modelo4 <- lm(logwage ~ . + idade_ao_quadrado + interacao_ano_idade, data = dados_filtrados_4)
+
+summary(modelo4)
 
 ```
-Após a avaliação do modelo, observou-se que o coeficiente de determinação (
-𝑅
-2
-R 
-2
- ) foi de 0,32, indicando que aproximadamente 32% da variação no logwage pode ser explicada pelas variáveis incluídas.
+Com os ajustes realizados, observamos que o 'R-squared' foi aprimorado, embora o erro padrão residual tenha aumentado para 0.3234. Portanto, a recomendação é continuar com a eliminação das variáveis que comprometem as seguintes características: linearidade, independência dos erros, homoscedasticidade, normalidade dos erros, ausência de multicolinearidade e independência das observações.
 
-Além disso, foi observado que o erro residual médio do modelo se estabilizou em 0,083, sugerindo que o modelo está realizando previsões razoáveis.
-Diante disso, recomenda-se a continuidade da análise, buscando eliminar variáveis que possam comprometer as seguintes suposições fundamentais da regressão linear.
+É crucial que as observações no conjunto de dados sejam independentes entre si, especialmente em situações que envolvem dados de séries temporais ou dados agrupados.
 
 # Interpretações do modelo selecionado
 
 ```{r}
 library(report)
-report(modelo4_ridge)
+report(modelo4)
 ```
-Fizemos uma análise utilizando um modelo de regressão linear regularizado (Ridge) para prever o logaritmo do salário (logwage) com base nas variáveis: ano (year),
-idade (age), estado civil (maritl), nível de escolaridade (education) e saúde (health). O modelo mostra que essas variáveis explicam uma parte significativa da variação
-no logaritmo do salário (R² = 0,34), indicando que cerca de 34% da variação nos salários pode ser atribuída a essas variáveis. A estatística F do modelo é alta
-(F(11, 2984) = 145,36, p < 0,001), sugerindo que o modelo é estatisticamente significativo.
+Fizemos uma análise usando um modelo de regressão linear (estimado por Mínimos Quadrados Ordinários - OLS) para prever o logaritmo do salário (logwage) com base nas variáveis: ano (year), idade (age) e estado civil (maritl). O modelo mostra que essas variáveis explicam uma parte significativa da variação no logaritmo do salário (R² = 0,144), o que significa que cerca de 14,4% da variação nos salários pode ser atribuída a essas variáveis. A estatística F do modelo é alta (F(8, 2987) = 62,97, p < 0,001), indicando que o modelo é estatisticamente significativo.
 
 Interpretação dos Resultados do Modelo:
-Intercepto: O intercepto do modelo é de -13,39, o que representa o valor estimado do logaritmo do salário quando todas as variáveis independentes são iguais a zero. Embora isso não seja interpretável na prática, pois uma idade de 0 anos, estado civil "nunca casado",
- escolaridade "menos que o ensino médio" e saúde "ruim" não representam uma situação realista, fornece uma referência para o modelo.
+Intercepto:O intercepto do modelo é de -40,36, o que representa o valor estimado do logaritmo do salário quando todas as variáveis independentes são iguais a zero. Assim como no modelo anterior, essa interpretação não é prática, pois uma idade de 0, estado civil "nunca casado" e outras variáveis não representariam uma situação realista.
 
-Ano (year): A cada ano adicional, o logaritmo do salário aumenta em média 0,0058 (ou seja, cerca de 0,58% quando transformado
-de logarítmico para o valor original). Isso indica uma tendência positiva nos salários ao longo do tempo. O efeito é estatisticamente significativo (p < 0,001).
+Ano (year): A cada ano adicional, o logaritmo do salário aumenta em média 0,0219 (ou seja, cerca de 2,19% quando transformado de logarítmico para o valor original). Isso indica uma tendência positiva nos salários ao longo do tempo. O efeito é estatisticamente significativo (p = 0,0462).
 
-Idade (age): A cada ano a mais de idade, o logaritmo do salário aumenta em média 0,0099, sugerindo que pessoas mais velhas tendem a ganhar salários significativamente mais altos.
-Este efeito é estatisticamente significativo (p < 0,001).
+Idade (age): O coeficiente da idade não é significativo neste modelo (p = 0,3571), sugerindo que, após as modificações no modelo, a idade não tem um efeito significativo no logaritmo do salário.
 
 Estado Civil (maritl):
 
-Para pessoas casadas, o logaritmo do salário aumenta em média 0,1614 em comparação aos que nunca foram casados, sendo este efeito estatisticamente significativo (p < 0,001).
-As pessoas viúvas têm um aumento médio de 0,0425 em relação ao estado civil "nunca casado" (p = 0,65), indicando que esse efeito não é estatisticamente significativo.
-Os divorciados apresentam um aumento médio de 0,0604, enquanto os separados têm um aumento médio de 0,1024, ambos em comparação aos que nunca foram casados, mas não são estatisticamente significativos.
+-Casado: Pessoas casadas tendem a ganhar em média 0,1377 a mais no logaritmo do salário em comparação com aquelas que nunca se casaram, o que é um efeito considerável e estatisticamente significativo (p < 0,001).
+-Viúvo: Não há efeito significativo no salário para viúvos (p = 0,877).
+-Divorciado: O efeito é positivo (0,0373) e não é significativo (p = 0,893).
+-Separado: O efeito é negativo e não significativo (-0,0086, p = 0,853).
 
-Nível de Escolaridade (education):
+Análise Adicional:
 
-Aqueles com o ensino médio completo têm um aumento médio de 0,0558 no logaritmo do salário, enquanto os que têm alguma faculdade apresentam um aumento de 0,1770, e os graduados aumentam em média 0,2818.
-Por fim, aqueles com diploma avançado apresentam um aumento médio de 0,4398. Todos esses efeitos são estatisticamente significativos (p < 0,001).
+Idade ao quadrado: O coeficiente de idade_ao_quadrado é de -0,0004424, que é altamente significativo (p < 2e-16). Isso sugere que o efeito da idade no logaritmo do salário é não linear, indicando que, após certo ponto, aumentos adicionais na idade estão associados a uma diminuição no logaritmo do salário.
 
-Saúde (health):
+Interação Ano-Idade: O coeficiente da variável de interação interacao_ano_idade é de -0,0002070 e não é significativo (p = 0,4042). Isso indica que não há evidências de que a relação entre o ano e o salário dependa da idade.
 
-Para aqueles com saúde considerada "muito boa", há um aumento médio de 0,0699 no logaritmo do salário em comparação aos que têm saúde "ruim",
- sendo este efeito estatisticamente significativo (p < 0,001).
-
-Conclusão Prática:
-O Modelo 4, ao incorporar a regularização Ridge e ajustes polinomiais, demonstrou uma melhoria na capacidade preditiva em relação ao Modelo 3, com um menor erro quadrático médio (0.0824 vs. 0.0832) e um R² levemente aprimorado,
-indicando que as variáveis selecionadas fornecem explicações mais robustas sobre os salários em relação ao modelo anterior.
+Conclusão Prática: Esses resultados indicam que fatores como o ano, o estado civil e a idade têm impactos significativos nos salários. Especificamente, cada ano adicional está associado a um aumento no logaritmo do salário, refletindo uma tendência positiva ao longo do tempo. O estado civil de ser casado também mostra uma associação positiva e significativa com ganhos maiores. No entanto, a idade, após as modificações no modelo, não apresenta um efeito significativo no logaritmo do salário. Esses insights podem ser valiosos para formuladores de políticas e para pessoas que buscam melhorar sua posição no mercado de trabalho, destacando a relevância do tempo e do estado civil como fatores que podem influenciar a remuneração.
 
 # Previsões
 
@@ -594,26 +580,31 @@ novos_dados_previsao <- data.frame(
                   levels = c("1. <=Good", "2. >=Very Good"))
 )
 
-previsoes <- predict(modelo4_ridge, newdata = novos_dados_previsao, interval = "prediction")
+novos_dados_previsao$idade_ao_quadrado <- novos_dados_previsao$age^2
+novos_dados_previsao$interacao_ano_idade <- novos_dados_previsao$year * novos_dados_previsao$age
 
+previsoes <- predict(modelo4, newdata = novos_dados_previsao, interval = "prediction")
 previsoes
 ```
 
 Conclusão de Previsão
 Primeira Previsão:
 
-Previsão Pontual (fit): 4.792018
-Intervalo de Previsão (lwr, upr): [4.223358, 5.360677]
-Interpretação: Para uma observação específica (ano = 2009, idade = 50, estado civil = divorciado, educação = graduação completa, saúde = >=Very Good), o valor esperado de logwage é 4.792018. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 4.223358 e 5.360677. O intervalo de previsão é mais amplo do que o intervalo de confiança, refletindo a maior incerteza associada a prever um valor individual em vez de uma média.
+Para um indivíduo de 50 anos, divorciado, com nível de escolaridade "College Grad" e em boa saúde, a previsão do logaritmo do salário (logwage) é de aproximadamente 4.68. O intervalo de previsão para este valor é de 4.04 a 5.31.
 Segunda Previsão:
 
-Previsão Pontual (fit): 4.348553
-Intervalo de Previsão (lwr, upr): [3.781000, 4.916107]
-Interpretação: Para outra observação específica (ano = 2008, idade = 35, estado civil = nunca casado, educação = ensino médio completo, saúde = <=Good), o valor esperado de logwage é 4.348553. Estamos 95% confiantes de que o valor verdadeiro de logwage para essa observação estará entre 3.781000 e 4.916107. Novamente, o intervalo de previsão é mais amplo, refletindo a incerteza na previsão de um valor individual.
-Por conseguinte...
-As estimações pontuais e intervalares fornecem uma faixa de valores esperados para a média da população com certas características, com um nível de confiança de 95%.
+Para um indivíduo de 35 anos, nunca casado, com nível de escolaridade "HS Grad" e em saúde "<=Good", a previsão do logaritmo do salário (logwage) é de aproximadamente 4.59. O intervalo de previsão para este valor é de 3.95 a 5.22.
 
-As previsões pontuais e intervalares fornecem uma faixa de valores esperados para observações individuais, com um nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
+Por conseguinte...
+
+A análise comparativa entre os modelos de regressão linear 3 e 4 revela que o modelo 3 é, de fato, mais eficiente que o modelo 4 em termos de previsão e ajuste. Essa conclusão é suportada por vários fatores:
+
+- Precisão das estimativas
+- Intervalos de previsão
+- Métricas de ajuste
+-Complexidade do modelo
+
+Com isso, a superioridade do modelo 3 em termos de precisão, intervalos de previsão e métricas de ajuste indica que ele é mais eficiente para a tarefa de prever o logaritmo dos salários. Esses resultados destacam a importância de escolher modelos não apenas baseados na complexidade, mas sim na sua capacidade de explicar e prever variáveis de interesse de maneira confiável. Assim, recomenda-se a utilização do modelo 3 para análises futuras, considerando seu desempenho superior em comparação ao modelo 4. 
 
 # Conclusão e principais resultados do projeto
 
