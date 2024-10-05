@@ -185,8 +185,45 @@ step(modelo)
 plot(modelo)
 
 ```
+# Interpretação dos gráficos
 
-Seguindo as observações dos gráficos de análise das relações entre variáveis e suas respectivas dispersões e padronização dos resíduos, podemos concluir que nosso modelo de regressão linear ainda precisa de ajuste, devido a falta da uniformidade/linearidade da distribuição do nosso resíduos.
+Residuals vs Fitted:
+
+- Os resíduos parecem estar espalhados de forma aleatória em torno da linha horizontal (em torno de 0), o que é um
+bom sinal de que a relação entre as variáveis preditoras e a variável resposta é linear. Contudo, alguns resíduos
+maiores podem indicar potenciais outliers ou valores atípicos no modelo. Há uma ligeira concentração de resíduos em
+torno de -100 a 100, o que sugere que há alguns pontos que podem estar influenciando mais do que outros.
+
+Q-Q Residuals:
+
+- No gráfico, a maioria dos pontos se alinha bem com a linha, exceto nas extremidades, onde há algumas discrepâncias.
+Esses desvios nas caudas indicam que há alguns valores atípicos ou que os resíduos podem não ser perfeitamente
+normais. No entanto, a violação parece estar nas caudas, o que pode ser comum em amostras grandes, mas o centro
+parece relativamente bem ajustado.
+
+Scale-Location:
+
+- Os pontos estão relativamente espalhados de maneira homogênea ao longo dos valores ajustados, o que sugere que a
+variância dos resíduos é aproximadamente constante. Isso é um bom sinal de que a suposição de homocedasticidade está
+sendo atendida. No entanto, há uma ligeira dispersão em valores maiores de fitted, mas parece estar dentro dos
+limites aceitáveis.
+
+Residuals vs Leverage:
+
+- Há alguns pontos com valores de alavancagem maiores (próximos da linha de Cook), sugerindo que esses pontos podem
+ter uma influência considerável no modelo. Isso pode ser um indicativo de possíveis outliers ou pontos influentes,
+que podem distorcer o ajuste. Os pontos mais notáveis são o 231749 e o 289893, que podem merecer uma investigação
+mais detalhada para verificar se eles são influentes a ponto de distorcer as estimativas do modelo.
+
+No geral, os gráficos de diagnóstico não mostram grandes problemas com o modelo, embora haja alguns outliers e pontos
+de alta alavancagem que podem estar influenciando o modelo. A normalidade dos resíduos parece aceitável no centro,
+mas as caudas indicam a presença de alguns valores atípicos. A homocedasticidade parece estar atendida, com pouca
+variação no spread dos resíduos. Contudo, seria interessante verificar os pontos com alta alavancagem para entender
+seu impacto no modelo.
+
+Seguindo as observações dos gráficos de análise das relações entre variáveis e suas respectivas dispersões e
+padronização dos resíduos, podemos concluir que nosso modelo de regressão linear ainda precisa de alguns ajustes,
+devido a falta da uniformidade/linearidade da distribuição do nosso resíduos.
 
 Primeiramente, deveríamos testar cada variável do nosso modelo para inferir sua respectiva influência no modelo.
 
