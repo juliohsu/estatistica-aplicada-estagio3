@@ -365,6 +365,27 @@ Independência das Observações;
 As observações no conjunto de dados devem ser independentes umas das outras. Isso é especialmente importante em dados
 de séries temporais ou dados agrupados.
 
+# Modelo 4
+
+```{r}
+
+dados_filtrados_4 <- wage_sem_outliers %>% 
+  select(-c(region, jobclass, race, health_ins, wage, education, health))
+dados_filtrados_4$idade_ao_quadrado <- dados_filtrados_4$age^2
+dados_filtrados_4$interacao_ano_idade <- dados_filtrados_4$year * dados_filtrados_4$age
+modelo4 <- lm(logwage ~ . + idade_ao_quadrado + interacao_ano_idade, data = dados_filtrados_4)
+
+summary(modelo4)
+
+```
+O modelo 3 é superior ao modelo 4 por apresentar um melhor ajuste (R² ajustado de 0.3147 versus 0.142), menor erro
+padrão residual (0.289 contra 0.3234) e incluir coeficientes estatisticamente mais significativos. Enquanto o modelo
+4 adiciona complexidade com variáveis como idade ao quadrado e interação entre ano e idade, essas variáveis não
+melhoram o ajuste geral e, na maioria, não são estatisticamente relevantes. Assim, o modelo 3 equilibra simplicidade
+e eficácia, sendo mais adequado para explicar a variação do logaritmo do salário. Portanto, o modelo3 será o
+escolhido para as análises subsequentes
+
+
 # Interpretações do modelo selecionado
 
 ```{r}
@@ -511,7 +532,6 @@ características, com um nível de confiança de 95%.
 
 E as previsões Pontuais e Intervalares: Fornecem uma faixa de valores esperados para observações individuais, com um
 nível de confiança de 95%, mas com maior incerteza devido à variabilidade individual.
-
 
 # Conclusão e principais resultados do projeto
 
